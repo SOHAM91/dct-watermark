@@ -23,20 +23,21 @@ class Qt {
     Qt() {}
 
     /** Quantization */
-    void WaterDeQt(final int input[][], final int output[][], final double robustness) {
+    void WaterDeQt(final int input[][], final int output[][]) {
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                output[i][j] = (int) (input[i][j] * (this.Qtable[i][j] * this.filter[i][j] / robustness));
+                output[i][j] = (int) (input[i][j] * (this.Qtable[i][j] * this.filter[i][j]));
             }
         }
     }
 
     /** De Quantization */
-    void WaterQt(final int input[][], final int output[][], final double robustness) {
+    void WaterQt(final int input[][], final int output[][]) {
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                output[i][j] = (int) Math.round(input[i][j] / (this.Qtable[i][j] * this.filter[i][j] / robustness));
+                output[i][j] = (int) Math.round(input[i][j] / (this.Qtable[i][j] * this.filter[i][j]));
             }
         }
     }
+
 }
