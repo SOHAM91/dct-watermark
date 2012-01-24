@@ -1,3 +1,12 @@
+/*
+ * Copyright 2012 by Christoph Gaffga licensed under the Apache License, Version 2.0 (the "License"); you may not use
+ * this file except in compliance with the License. You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions and limitations under the
+ * License.
+ */
+
 package net.util;
 
 import java.io.ByteArrayInputStream;
@@ -15,16 +24,14 @@ import com.google.zxing.common.reedsolomon.ReedSolomonDecoder;
 import com.google.zxing.common.reedsolomon.ReedSolomonEncoder;
 import com.google.zxing.common.reedsolomon.ReedSolomonException;
 
-/*
- * Created on Jan 23, 2012 TODO To change the template for this generated file go to Window - Preferences - Java - Code
- * Generation - Code and Comments
- */
-
 /**
- * @author cgaffga
+ * Some helper to work with an array of bits.
+ * 
+ * @author Christoph Gaffga
  */
 public class Bits {
 
+    /** Unzip the bits */
     public static Bits bitsGZIPDecode(final Bits bits) throws IOException {
         final ByteArrayInputStream byteIn = new ByteArrayInputStream(bits.getData());
         final GZIPInputStream zipIn = new GZIPInputStream(byteIn);
@@ -36,6 +43,7 @@ public class Bits {
         return result;
     }
 
+    /** Zip the bits */
     public static Bits bitsGZIPEncode(final Bits bits) {
         try {
             final ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
@@ -50,6 +58,7 @@ public class Bits {
         }
     }
 
+    /** Decode using Reed-Solomon error correction (with n bytes at the end of bits). */
     public static Bits bitsReedSolomonDecode(final Bits bits, final int n) throws ReedSolomonException {
         int[] data = new Bits(bits.getBits(0, bits.size() - n * 8)).getBytes();
         data = Arrays.copyOf(data, data.length + n);
@@ -63,6 +72,7 @@ public class Bits {
         return result;
     }
 
+    /** Encode using Reed-Solomon error correction (with n bytes added to the end of bits). */
     public static Bits bitsReedSolomonEncode(final Bits bits, final int n) {
         final int[] data = Arrays.copyOf(bits.getBytes(), (bits.size() + 7) / 8 + n);
         final ReedSolomonEncoder enc = new ReedSolomonEncoder(GenericGF.QR_CODE_FIELD_256);
@@ -74,6 +84,7 @@ public class Bits {
         return result;
     }
 
+    /** Some test I run, just while debugging. */
     public static void main(final String[] args) {
 
         final Bits bits = new Bits();
@@ -131,8 +142,10 @@ public class Bits {
 
     }
 
+    /** Internal array with bits. */
     private final List<Boolean> bits;
 
+    /** The read-counter for pop-methods. */
     private int readPosition = 0;
 
     public Bits() {
