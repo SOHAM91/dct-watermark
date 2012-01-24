@@ -37,13 +37,13 @@ public class Watermark {
     final static int bitBoxSize = 8;
 
     /** Number of bytes used for Reed-Solomon error correction. */
-    static final int nRS = 8;
+    static final int nRS = 16;
 
     /** Maximal length in of characters for text messages. */
     final static int maxLen = (128 / bitBoxSize * (128 / bitBoxSize) - nRS * 8) / 6;
 
-    /** Kind of the opacity of the marks when added to the image. */
-    static final double robustness = 1.0; /* 1.0 does nothing, default */
+    /** Opacity of the marks when added to the image. */
+    static final double opacity = 0.7; /* 1.0 is strongest watermark */
 
     /** Seed for randomization of the watermark. */
     private long randomizeWatermarkSeed = 19;
@@ -90,7 +90,7 @@ public class Watermark {
                 }
 
                 // 寫入檔案 watermark
-                writeRaw("water1.raw", watermarkBitmap);
+                writeRaw("watermarkBits.raw", watermarkBitmap);
 
                 // embedding...
                 final int[][] grey = watermark.embed(image, watermarkBitmap);
@@ -100,7 +100,7 @@ public class Watermark {
                         final Color color = new Color(image.getRGB(x, y));
                         final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
                         // adjust brightness of the pixel...
-                        hsb[2] = (float) (grey[y][x] / 255.0);
+                        hsb[2] = (float) (hsb[2] * (1.0 - opacity) + grey[y][x] * opacity / 255.0);
                         final Color colorNew = new Color(Color.HSBtoRGB(hsb[0], hsb[1], hsb[2]));
                         image.setRGB(x, y, colorNew.getRGB());
 
@@ -115,7 +115,7 @@ public class Watermark {
             final int[][] extracted = watermark.extract(image);
 
             // 寫入檔案 Watermark
-            writeRaw("water2.raw", extracted);
+            writeRaw("watermarkExtracted.raw", extracted);
 
             // black/white the extracted result...
             for (int y = 0; y < 128 / bitBoxSize * bitBoxSize; y += bitBoxSize) {
@@ -136,7 +136,7 @@ public class Watermark {
             }
 
             // write B/W result...
-            writeRaw("water3.raw", extracted);
+            writeRaw("watermarkExtractedBits.raw", extracted);
 
             // reconstruct bits...
             Bits bits2 = new Bits();
@@ -230,7 +230,6 @@ public class Watermark {
 
         // 將 Original image 切成 8*8 的 block 作 DCT 轉換
         // System.out.println("Original image         ---> FDCT");
-
         for (int y = 0; y < height; y += N) {
             for (int x = 0; x < width; x += N) {
                 for (int i = y; i < y + N; i++) {
@@ -301,7 +300,7 @@ public class Watermark {
                 wm1.ForwardDCT(w1, w2);
 
                 final Qt qw1 = new Qt(); // 宣告 Qt 物件
-                qw1.WaterQt(w2, w3, robustness); // 引用Qt class 中,WaterQt的方法
+                qw1.WaterQt(w2, w3); // 引用Qt class 中,WaterQt的方法
 
                 for (int p = y; p < y + W; p++) {
                     for (int q = x; q < x + W; q++) {
@@ -521,7 +520,7 @@ public class Watermark {
                 k = 0;
 
                 final Qt qw2 = new Qt(); // 宣告 Qt 物件
-                qw2.WaterDeQt(w1, w2, robustness); // 引用Qt class 中,WaterDeQt的方法
+                qw2.WaterDeQt(w1, w2); // 引用Qt class 中,WaterDeQt的方法
 
                 final DCT2 wm2 = new DCT2(); // 宣告 DCT2 物件
                 wm2.InverseDCT(w2, w3); // 引用DCT2 class 中,InverseDCT的方法
