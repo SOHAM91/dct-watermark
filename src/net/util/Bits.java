@@ -220,6 +220,13 @@ public class Bits {
         return this.bits;
     }
 
+    /**
+     * Return a sublist of the bits.
+     * 
+     * @param fromIndex Start position, inclusive.
+     * @param toIndex End position, exclusive.
+     * @return Bits for the specified range.
+     */
     public List<Boolean> getBits(final int fromIndex, final int toIndex) {
         return this.bits.subList(fromIndex, toIndex);
     }

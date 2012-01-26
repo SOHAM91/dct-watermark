@@ -23,6 +23,8 @@ import javax.imageio.ImageIO;
 
 import net.util.Bits;
 
+import com.google.zxing.common.reedsolomon.ReedSolomonException;
+
 /**
  * Implementation of a watermarking also. See https://code.google.com/p/dct-watermark/
  * 
@@ -33,135 +35,36 @@ public class Watermark {
     /** Valid characters and their order in our 6-bit charset. */
     final static String validChars = " abcdefghijklmnopqrstuvwxyz0123456789.-,:/()?!\"'#*+_%$&=<>[];@§\n";
 
-    /** The width and height of our quantization box in pixels (n-times n pixel per bit). */
-    final static int bitBoxSize = 8;
-
-    /** Number of bytes used for Reed-Solomon error correction. */
-    static final int nRS = 16;
-
-    /** Maximal length in of characters for text messages. */
-    final static int maxLen = (128 / bitBoxSize * (128 / bitBoxSize) - nRS * 8) / 6;
-
-    /** Opacity of the marks when added to the image. */
-    static final double opacity = 0.7; /* 1.0 is strongest watermark */
-
-    /** Seed for randomization of the watermark. */
-    private long randomizeWatermarkSeed = 19;
-
-    /** Seed for randomization of the embedding. */
-    private long randomizeEmbeddingSeed = 24;
-
     /**
-     * @param args
+     * Just for debugging. It reads a file called <tt>lena.jpg</tt> and embeds a watermark. Writes it to
+     * <tt>lena2.jpg</tt>, reads it again, and extracts the watermark.
      */
     public static void main(final String[] args) {
-
-        final Watermark watermark = new Watermark();
-
+        debug = true;
         try {
+            String message = "¡This is a TEST!";
+            final Watermark watermark = new Watermark(8, 20, 0.6);
 
-            final String message = "¡This is a TEST!";
-            Bits bits = new Bits();
-            if (true) {
+            // read source image...
+            BufferedImage image = ImageIO.read(new File("lena.jpg"));
 
-                // read source image...
-                final BufferedImage image = ImageIO.read(new File("lena.jpg"));
-                System.out.println("w=" + image.getWidth());
-                System.out.println("h=" + image.getHeight());
+            System.out.println("Image width:  " + image.getWidth());
+            System.out.println("Image height: " + image.getHeight());
+            System.out.println("Message: " + message);
+            System.out.println("Max bits total:   " + watermark.maxBitsTotal);
+            System.out.println("Max bits message: " + watermark.maxBitsData);
+            System.out.println("Max text len:     " + watermark.maxTextLen);
 
-                System.out.println("Message: " + message);
+            // embedding...
+            watermark.embed(image, message);
 
-                bits = watermark.string2Bits(message);
-
-                System.out.println("MaxLen: " + maxLen);
-                System.out.println("BitLen: " + message.length() * 6);
-
-                bits = Bits.bitsReedSolomonEncode(bits, nRS);
-
-                // create watermark image...
-                final int[][] watermarkBitmap = new int[128][128];
-                for (int y = 0; y < 128 / bitBoxSize * bitBoxSize; y++) {
-                    for (int x = 0; x < 128 / bitBoxSize * bitBoxSize; x++) {
-                        if (bits.size() > x / bitBoxSize + y / bitBoxSize * (128 / bitBoxSize)) {
-                            watermarkBitmap[y][x] = bits.getBit(x / bitBoxSize + y / bitBoxSize * (128 / bitBoxSize)) ? 255
-                                    : 0;
-                        }
-                    }
-                }
-
-                // 寫入檔案 watermark
-                writeRaw("watermarkBits.raw", watermarkBitmap);
-
-                // embedding...
-                final int[][] grey = watermark.embed(image, watermarkBitmap);
-                // write JPEG...
-                for (int y = 0; y < image.getHeight(); y++) {
-                    for (int x = 0; x < image.getWidth(); x++) {
-                        final Color color = new Color(image.getRGB(x, y));
-                        final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
-                        // adjust brightness of the pixel...
-                        hsb[2] = (float) (hsb[2] * (1.0 - opacity) + grey[y][x] * opacity / 255.0);
-                        final Color colorNew = new Color(Color.HSBtoRGB(hsb[0], hsb[1], hsb[2]));
-                        image.setRGB(x, y, colorNew.getRGB());
-
-                    }
-                }
-                ImageIO.write(image, "jpeg", new File("lena2.jpg"));
-
-            } // END embed
+            // save the new image as JPEG, and load it again...
+            ImageIO.write(image, "jpeg", new File("lena2.jpg"));
+            image = ImageIO.read(new File("lena2.jpg"));
 
             // extraction...
-            final BufferedImage image = ImageIO.read(new File("lena2.jpg"));
-            final int[][] extracted = watermark.extract(image);
-
-            // 寫入檔案 Watermark
-            writeRaw("watermarkExtracted.raw", extracted);
-
-            // black/white the extracted result...
-            for (int y = 0; y < 128 / bitBoxSize * bitBoxSize; y += bitBoxSize) {
-                for (int x = 0; x < 128 / bitBoxSize * bitBoxSize; x += bitBoxSize) {
-                    int sum = 0;
-                    for (int y2 = y; y2 < y + bitBoxSize; y2++) {
-                        for (int x2 = x; x2 < x + bitBoxSize; x2++) {
-                            sum += extracted[y2][x2];
-                        }
-                    }
-                    sum = sum / (bitBoxSize * bitBoxSize);
-                    for (int y2 = y; y2 < y + bitBoxSize; y2++) {
-                        for (int x2 = x; x2 < x + bitBoxSize; x2++) {
-                            extracted[y2][x2] = sum > 127 ? 255 : 0;
-                        }
-                    }
-                }
-            }
-
-            // write B/W result...
-            writeRaw("watermarkExtractedBits.raw", extracted);
-
-            // reconstruct bits...
-            Bits bits2 = new Bits();
-            for (int y = 0; y < 128 / bitBoxSize * bitBoxSize; y += bitBoxSize) {
-                for (int x = 0; x < 128 / bitBoxSize * bitBoxSize; x += bitBoxSize) {
-                    bits2.addBit(extracted[y][x] > 127);
-                }
-            }
-            bits2 = new Bits(bits2.getBits(0, maxLen * 6 + 8 * nRS));
-
-            // count errors...
-            int errors = 0;
-            for (int i = 0; i < bits.size(); i++) {
-                if (bits.getBit(i) != bits2.getBit(i)) {
-                    errors++;
-                }
-            }
-            System.out.println("Error Bits (of " + bits.size() + "): " + errors);
-
-            bits2 = Bits.bitsReedSolomonDecode(bits2, nRS);
-
-            // reconstruct message...
-            final String message2 = watermark.bits2String(bits2).trim();
-            System.out.println("Reconstructed Message: " + message2);
-
+            message = watermark.extractText(image);
+            System.out.println("Extracted Message: " + message);
         } catch (final Exception e) {
             e.printStackTrace();
         }
@@ -172,14 +75,138 @@ public class Watermark {
         final OutputStream os = new BufferedOutputStream(fos, 1024);
         final DataOutputStream dos = new DataOutputStream(os);
         for (final int[] element : data) {
-            for (int j = 0; j < element.length; j++) {
-                dos.writeByte(element[j]);
+            for (final int element2 : element) {
+                dos.writeByte(element2);
             }
         }
         dos.close();
     }
 
-    private int[][] embed(final BufferedImage src, final int[][] water1) throws IOException {
+    /** The width and height of our quantization box in pixels (n-times n pixel per bit). */
+    int bitBoxSize = 10;
+
+    /** Number of bytes used for Reed-Solomon error correction. No error correction if zero. */
+    int byteLenErrorCorrection = 6;
+
+    /** Number of bits that could be stored, total, including error correction bits. */
+    int maxBitsTotal;
+
+    /** Number of bits for data (excluding error correction). */
+    int maxBitsData;
+
+    /** Maximal length in of characters for text messages. */
+    int maxTextLen;
+
+    /** Opacity of the marks when added to the image. */
+    double opacity = 0.9; /* 1.0 is strongest watermark */
+
+    /** Seed for randomization of the watermark. */
+    private long randomizeWatermarkSeed = 19;
+
+    /** Seed for randomization of the embedding. */
+    private long randomizeEmbeddingSeed = 24;
+
+    /** Enable some debugging output. */
+    private static boolean debug = false;
+
+    public Watermark() {
+        calculateSizes();
+    }
+
+    public Watermark(final int boxSize, final int errorCorrectionBytes, final double opacity) {
+        this.bitBoxSize = boxSize;
+        this.byteLenErrorCorrection = errorCorrectionBytes;
+        this.opacity = opacity;
+        calculateSizes();
+    }
+
+    public Watermark(final int boxSize, final int errorCorrectionBytes, final double opacity, final long seed1,
+            final long seed2) {
+        this.bitBoxSize = boxSize;
+        this.byteLenErrorCorrection = errorCorrectionBytes;
+        this.opacity = opacity;
+        this.randomizeEmbeddingSeed = seed1;
+        this.randomizeWatermarkSeed = seed2;
+        calculateSizes();
+    }
+
+    public Watermark(final long seed1, final long seed2) {
+        this.randomizeEmbeddingSeed = seed1;
+        this.randomizeWatermarkSeed = seed2;
+        calculateSizes();
+    }
+
+    private String bits2String(final Bits bits) {
+        final StringBuilder buf = new StringBuilder();
+        {
+            for (int i = 0; i < this.maxTextLen; i++) {
+                final int c = (int) bits.getValue(i * 6, 6);
+                buf.append(validChars.charAt(c));
+            }
+        }
+        return buf.toString();
+    }
+
+    private void calculateSizes() {
+        this.maxBitsTotal = 128 / this.bitBoxSize * (128 / this.bitBoxSize);
+        this.maxBitsData = this.maxBitsTotal - this.byteLenErrorCorrection * 8;
+        this.maxTextLen = this.maxBitsData / 6;
+    }
+
+    public void embed(final BufferedImage image, final Bits data) {
+        Bits bits;
+        // make the size fit...
+        if (data.size() > this.maxBitsData) {
+            bits = new Bits(data.getBits(0, this.maxBitsData));
+        } else {
+            bits = new Bits(data);
+            while (bits.size() < this.maxBitsData) {
+                bits.addBit(false);
+            }
+        }
+
+        // add error correction...
+        if (this.byteLenErrorCorrection > 0) {
+            bits = Bits.bitsReedSolomonEncode(bits, this.byteLenErrorCorrection);
+        }
+
+        // create watermark image...
+        final int[][] watermarkBitmap = new int[128][128];
+        for (int y = 0; y < 128 / this.bitBoxSize * this.bitBoxSize; y++) {
+            for (int x = 0; x < 128 / this.bitBoxSize * this.bitBoxSize; x++) {
+                if (bits.size() > x / this.bitBoxSize + y / this.bitBoxSize * (128 / this.bitBoxSize)) {
+                    watermarkBitmap[y][x] = bits.getBit(x / this.bitBoxSize + y / this.bitBoxSize
+                            * (128 / this.bitBoxSize)) ? 255 : 0;
+                }
+            }
+        }
+
+        if (debug) {
+            try {
+                writeRaw("water1.raw", watermarkBitmap);
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // embedding...
+        final int[][] grey = embed(image, watermarkBitmap);
+
+        // added computed data to original image...
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                final Color color = new Color(image.getRGB(x, y));
+                final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+                // adjust brightness of the pixel...
+                hsb[2] = (float) (hsb[2] * (1.0 - this.opacity) + grey[y][x] * this.opacity / 255.0);
+                final Color colorNew = new Color(Color.HSBtoRGB(hsb[0], hsb[1], hsb[2]));
+                image.setRGB(x, y, colorNew.getRGB());
+
+            }
+        }
+    }
+
+    private int[][] embed(final BufferedImage src, final int[][] water1) {
         final int width = (src.getWidth() + 7) / 8 * 8;
         final int height = (src.getHeight() + 7) / 8 * 8;
 
@@ -260,7 +287,7 @@ public class Watermark {
 
         // watermark image 作 random 處理
         // System.out.println("Watermark image        ---> Random");
-        final Random r = new Random(randomizeWatermarkSeed); // 設定亂數產生器的seed
+        final Random r = new Random(this.randomizeWatermarkSeed); // 設定亂數產生器的seed
         for (int i = 0; i < 128; i++) {
             for (int j = 0; j < 128; j++) {
                 while (true) {
@@ -319,7 +346,7 @@ public class Watermark {
         // System.out.println("Watermarked image      ---> Embedding");
 
         // Random Embedding
-        final Random r1 = new Random(randomizeEmbeddingSeed); // 設定亂數產生器的seed
+        final Random r1 = new Random(this.randomizeEmbeddingSeed); // 設定亂數產生器的seed
         for (int i = 0; i < 128; i++) {
             for (int j = 0; j < 128; j++) {
                 while (true) {
@@ -390,7 +417,81 @@ public class Watermark {
         return buff3;
     }
 
-    private int[][] extract(final BufferedImage src) throws IOException {
+    public void embed(final BufferedImage image, final String data) {
+        embed(image, string2Bits(data));
+    }
+
+    public Bits extractData(final BufferedImage image) throws ReedSolomonException {
+        final int[][] extracted = extractRaw(image);
+
+        if (debug) {
+            try {
+                writeRaw("water2.raw", extracted);
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // black/white the extracted result...
+        for (int y = 0; y < 128 / this.bitBoxSize * this.bitBoxSize; y += this.bitBoxSize) {
+            for (int x = 0; x < 128 / this.bitBoxSize * this.bitBoxSize; x += this.bitBoxSize) {
+                int sum = 0;
+                for (int y2 = y; y2 < y + this.bitBoxSize; y2++) {
+                    for (int x2 = x; x2 < x + this.bitBoxSize; x2++) {
+                        sum += extracted[y2][x2];
+                    }
+                }
+                sum = sum / (this.bitBoxSize * this.bitBoxSize);
+                for (int y2 = y; y2 < y + this.bitBoxSize; y2++) {
+                    for (int x2 = x; x2 < x + this.bitBoxSize; x2++) {
+                        extracted[y2][x2] = sum > 127 ? 255 : 0;
+                    }
+                }
+            }
+        }
+
+        if (debug) {
+            try {
+                writeRaw("water3.raw", extracted);
+            } catch (final IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // reconstruct bits...
+        Bits bits = new Bits();
+        for (int y = 0; y < 128 / this.bitBoxSize * this.bitBoxSize; y += this.bitBoxSize) {
+            for (int x = 0; x < 128 / this.bitBoxSize * this.bitBoxSize; x += this.bitBoxSize) {
+                bits.addBit(extracted[y][x] > 127);
+            }
+        }
+        bits = new Bits(bits.getBits(0, this.maxBitsTotal));
+
+        // if debugging, copy original before error correction...
+        Bits bitsBeforeCorrection = null;
+        if (debug) {
+            bitsBeforeCorrection = new Bits(bits.getBits(0, this.maxBitsData));
+        }
+
+        // apply error correction...
+        if (this.byteLenErrorCorrection > 0) {
+            bits = Bits.bitsReedSolomonDecode(bits, this.byteLenErrorCorrection);
+        }
+
+        if (debug) {// count errors (faulty bits)...
+            int errors = 0;
+            for (int i = 0; i < bitsBeforeCorrection.size(); i++) {
+                if (bitsBeforeCorrection.getBit(i) != bits.getBit(i)) {
+                    errors++;
+                }
+            }
+            System.out.println("Error Bits (of " + bitsBeforeCorrection.size() + "): " + errors);
+        }
+
+        return bits;
+    }
+
+    private int[][] extractRaw(final BufferedImage src) {
         final int width = (src.getWidth() + 7) / 8 * 8;
         final int height = (src.getHeight() + 7) / 8 * 8;
 
@@ -486,7 +587,7 @@ public class Watermark {
         scan.one2two(mfbuff1, mfbuff2); // 引用zigZag class 中,one2two的方法
 
         // random extracting
-        final Random r1 = new Random(randomizeEmbeddingSeed);
+        final Random r1 = new Random(this.randomizeEmbeddingSeed);
         for (int i = 0; i < 128; i++) {
             for (int j = 0; j < 128; j++) {
                 while (true) {
@@ -538,7 +639,7 @@ public class Watermark {
         // System.out.println("                       OK!      ");
 
         // System.out.println("Watermark image       ---> Re Random");
-        final Random r = new Random(randomizeWatermarkSeed); // 設定亂數產生器的seed
+        final Random r = new Random(this.randomizeWatermarkSeed); // 設定亂數產生器的seed
         for (int i = 0; i < 128; i++) {
             for (int j = 0; j < 128; j++) {
                 while (true) {
@@ -558,6 +659,10 @@ public class Watermark {
         return water3;
     }
 
+    public String extractText(final BufferedImage image) throws ReedSolomonException {
+        return bits2String(extractData(image)).trim();
+    }
+
     private Bits string2Bits(String s) {
         final Bits bits = new Bits();
 
@@ -572,32 +677,20 @@ public class Watermark {
         }
 
         // shorten if needed...
-        if (s.length() > maxLen) {
-            s = s.substring(0, maxLen);
+        if (s.length() > this.maxTextLen) {
+            s = s.substring(0, this.maxTextLen);
         }
         // padding if needed...
-        while (s.length() < maxLen) {
+        while (s.length() < this.maxTextLen) {
             s += " ";
         }
 
         // create watermark bits...
-        System.out.println("Max bits: " + 128 / bitBoxSize * (128 / bitBoxSize));
         for (int j = 0; j < s.length(); j++) {
             bits.addValue(validChars.indexOf(s.charAt(j)), 6);
         }
 
         return bits;
-    }
-
-    private String bits2String(Bits bits) {
-        final StringBuilder buf = new StringBuilder();
-        {
-            for (int i = 0; i < maxLen; i++) {
-                final int c = (int) bits.getValue(i * 6, 6);
-                buf.append(validChars.charAt(c));
-            }
-        }
-        return buf.toString();
     }
 
 }
