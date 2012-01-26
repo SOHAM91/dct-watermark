@@ -1,4 +1,6 @@
 #labels Featured,ManPage,Documentation,Usage
+# manpage for dct-watermark.sh.
+
 = dct-watermark man page =
 
 show this help via:
