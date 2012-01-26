@@ -363,7 +363,7 @@ public class Watermark {
         }
 
         // 二維 轉 一維
-        final zigZag scan = new zigZag();
+        final ZigZag scan = new ZigZag();
         scan.two2one(mfbuff1, mfbuff2);
 
         // WriteBack coefficients
@@ -584,7 +584,7 @@ public class Watermark {
         cc = 0;
 
         // 一維 轉 二維
-        final zigZag scan = new zigZag(); // 宣告 zigZag 物件
+        final ZigZag scan = new ZigZag(); // 宣告 zigZag 物件
         scan.one2two(mfbuff1, mfbuff2); // 引用zigZag class 中,one2two的方法
 
         // random extracting

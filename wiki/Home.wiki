@@ -1,4 +1,3 @@
-#labels Deprecated
 <g:plusone size="medium"></g:plusone>
 
 = Robust Watermarks for color JPEG in Java =
@@ -22,13 +21,13 @@ java -jar dct-watermark.jar e -d lena.jpg lena2.jpg "Hello World"
 
 To *extract* a watermark from a picture call this:
 {{{
-java -jar dct-watermark.jar e -d lena2.jpg
+java -jar dct-watermark.jar x -d lena2.jpg
 }}}
 
 You can also give a seed to protect the data:
 {{{
 java -jar dct-watermark.jar e -d -s1 44 -s2 12 lena.jpg lena2.jpg "Hello World"
-java -jar dct-watermark.jar e -d -s1 44 -s2 12 lena2.jpg
+java -jar dct-watermark.jar x -d -s1 44 -s2 12 lena2.jpg
 }}}
 For more options (e.g. error correction, bit-size, opacity/visibility, quality) type:
 {{{
