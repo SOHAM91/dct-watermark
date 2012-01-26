@@ -51,11 +51,11 @@ public class Main {
             System.out.println("by the error correction also.");
             System.out.println("\nExamples:");
             System.out.println("dct-watermark e -d lena.jpg lena2.jpg \"Hello World\"");
-            System.out.println("dct-watermark.sh x -d lena2.jpg");
+            System.out.println("dct-watermark x -d lena2.jpg");
             System.out.println("dct-watermark e -d lena.jpg lena2.jpg \"Hello World\"");
-            System.out.println("dct-watermark.sh x -d lena2.jpg");
+            System.out.println("dct-watermark x -d lena2.jpg");
             System.out.println("dct-watermark e -d -b 8 -e 20 -o 0.7 lena.jpg lena2.jpg \"Hello World\"");
-            System.out.println("dct-watermark.sh x -d -b 8 -e 20 lena2.jpg");
+            System.out.println("dct-watermark x -d -b 8 -e 20 lena2.jpg");
             System.out.println();
         } else {
             try {
