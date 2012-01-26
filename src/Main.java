@@ -1,7 +1,12 @@
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Iterator;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.FileImageOutputStream;
 
 import net.watermark.Watermark;
 
@@ -21,6 +26,7 @@ public class Main {
         double opacity = 1.0;
         long seed1 = 19;
         long seed2 = 24;
+        Float quality = null;
 
         if (args.length < 2 || args[0].equals("-h") || args[0].equals("--help")) {
             System.out.println("Watermark Usage:  dct-watermark [e|x|-h] [-options] src.jpg [dst.jpg text] \n");
@@ -33,6 +39,7 @@ public class Main {
             System.out.println("  -o   opacity of the watermark (float, 0..1, 1.0=solid)");
             System.out.println("  -s1  first seed for random number initialization (long)");
             System.out.println("  -s2  second seed for random number initialization (long)");
+            System.out.println("  -q   JPEG quality (float, 0..1)");
             System.out.println("  -d   turn debugging mode on");
             System.out.println("The bigger the box, the higher the error correction, the more solid the watermark - ");
             System.out
@@ -63,8 +70,10 @@ public class Main {
                         opacity = Double.parseDouble(args[++i]);
                     } else if (args[i].equals("-s1")) {
                         seed1 = Long.parseLong(args[++i]);
-                    } else if (args[i].equals("-b")) {
+                    } else if (args[i].equals("-s2")) {
                         seed2 = Long.parseLong(args[++i]);
+                    } else if (args[i].equals("-q")) {
+                        quality = Float.parseFloat(args[++i]);
                     } else if (args[i].equals("-d")) {
                         Watermark.debug = true;
                     } else {
@@ -91,6 +100,7 @@ public class Main {
                         System.out.println("Image:            " + file);
                         System.out.println("Image width:      " + image.getWidth());
                         System.out.println("Image height:     " + image.getHeight());
+                        System.out.println("Output JPEG qual.:" + quality);
                         System.out.println("Watermark:");
                         System.out.println("Text:             " + message);
                         System.out.println("Text length:      " + message.length());
@@ -107,7 +117,20 @@ public class Main {
                     }
 
                     water.embed(image, message);
-                    ImageIO.write(image, "jpeg", new File(file2));
+
+                    // write back to JPEG...
+                    final Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("jpeg");
+                    final ImageWriter writer = iter.next();
+                    final ImageWriteParam iwp = writer.getDefaultWriteParam();
+                    if (quality != null) {
+                        iwp.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                        iwp.setCompressionQuality(quality);
+                    }
+                    final FileImageOutputStream output = new FileImageOutputStream(new File(file2));
+                    writer.setOutput(output);
+                    final IIOImage imageIO = new IIOImage(image, null, null);
+                    writer.write(null, imageIO, iwp);
+                    writer.dispose();
                 } else if (command.equals("x")) { // extraction...
 
                     if (Watermark.debug) {
