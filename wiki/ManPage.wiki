@@ -1,0 +1,38 @@
+= dct-watermark man page =
+
+show this help via:
+<pre>
+./dct-watermark.sh -h
+java -jar dct-watermark.jar -h
+</pre>
+
+this is just a copy of the [https://code.google.com/p/dct-watermark/source/browse/trunk/src/Main.java#31 help screen] shown with the -h option:
+<pre>
+Watermark Usage:  dct-watermark [e|x|-h] [-options] src.jpg [dst.jpg text] 
+
+  Commands:
+  e    embedding mode
+  x    extraction mode
+  Options:
+  -b   box size in pixel, the size of pixels (x*x) for each bit (int)
+  -e   number of bytes for Reed-Solomon error correction (int)
+  -o   opacity of the watermark (float, 0..1, 1.0=solid)
+  -s1  first seed for random number initialization (long)
+  -s2  second seed for random number initialization (long)
+  -q   JPEG quality (float, 0..1)
+  -d   turn debugging mode on
+The bigger the box, the higher the error correction, the more solid the watermark - 
+the bigger the robustness of the watermark, but you can store less or it's less invisible.
+Random seeds for embedding and extraction must be equal.
+If the watermark is totally broken, you get a ReedSolomonException, as it can't be fixed
+Capacity: (128 / b)^2 - e * 8 bits, 6 bits per character
+by the error correction also.
+
+Examples:
+dct-watermark e -d lena.jpg lena2.jpg "Hello World"
+dct-watermark.sh x -d lena2.jpg
+dct-watermark e -d lena.jpg lena2.jpg "Hello World"
+dct-watermark.sh x -d lena2.jpg
+dct-watermark e -d -b 8 -e 20 -o 0.7 lena.jpg lena2.jpg "Hello World"
+dct-watermark.sh x -d -b 8 -e 20 lena2.jpg
+</pre>
