@@ -1,13 +1,6 @@
-#summary One-sentence summary of this page.
+#labels Featured,Settings,Robustness,Watermark,Visibility
+#A comparison of different settings (bitrate, opacity, quality) and the resulting visibility and robustness.
 
-= Introduction =
+= Settings and Robustness Comparison =
 
-Add your content here.
-
-
-= Details =
-
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+TODO
