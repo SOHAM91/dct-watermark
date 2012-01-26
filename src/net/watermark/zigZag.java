@@ -4,12 +4,8 @@ package net.watermark;
 //程式功能：zigZag 類別,含two2one(二維轉一維)與one2two
 //(一維轉二維)兩種zigzag scan方法
 
-class zigZag {
+class ZigZag {
     static int N = 128;
-
-    zigZag() {
-
-    } // Constructor
 
     void one2two(final int input[], final int output[][]) {
         int n = 0, x = 0, y = 0;
