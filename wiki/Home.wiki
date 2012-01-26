@@ -35,7 +35,7 @@ For more options (e.g. error correction, bit-size, opacity/visibility, quality) 
 java -jar dct-watermark.jar -h
 }}}
 
-*Note:* If you wanna upload to someplace that compresses the photo again/itself (like facebook albums), _always_ set the JPEG quality to 100% via switch <tt>-q 1.0</tt>
+*Note:* If you wanna upload to someplace that compresses the photo again/itself (like [http://www.facebook.com/photo.php?fbid=10150503288762499&set=a.358839827498.152299.522392498&type=1 facebook albums]), _always_ set the JPEG quality to 100% via switch <tt>-q 1.0</tt>
 
 == Online Demos ==
 currently there is no online demo, hope I can upload a webapp soon.
