@@ -33,7 +33,7 @@ import com.google.zxing.common.reedsolomon.ReedSolomonException;
 public class Watermark {
 
     /** Valid characters and their order in our 6-bit charset. */
-    final static String validChars = " abcdefghijklmnopqrstuvwxyz0123456789.-,:/()?!\"'#*+_%$&=<>[];@§\n";
+    public final static String VALID_CHARS = " abcdefghijklmnopqrstuvwxyz0123456789.-,:/()?!\"'#*+_%$&=<>[];@§\n";
 
     /**
      * Just for debugging. It reads a file called <tt>lena.jpg</tt> and embeds a watermark. Writes it to
@@ -98,7 +98,7 @@ public class Watermark {
     int maxTextLen;
 
     /** Opacity of the marks when added to the image. */
-    double opacity = 0.9; /* 1.0 is strongest watermark */
+    double opacity = 1.0; /* 1.0 is strongest watermark */
 
     /** Seed for randomization of the watermark. */
     private long randomizeWatermarkSeed = 19;
@@ -107,7 +107,7 @@ public class Watermark {
     private long randomizeEmbeddingSeed = 24;
 
     /** Enable some debugging output. */
-    private static boolean debug = false;
+    public static boolean debug = false;
 
     public Watermark() {
         calculateSizes();
@@ -141,7 +141,7 @@ public class Watermark {
         {
             for (int i = 0; i < this.maxTextLen; i++) {
                 final int c = (int) bits.getValue(i * 6, 6);
-                buf.append(validChars.charAt(c));
+                buf.append(VALID_CHARS.charAt(c));
             }
         }
         return buf.toString();
@@ -485,7 +485,8 @@ public class Watermark {
                     errors++;
                 }
             }
-            System.out.println("Error Bits (of " + bitsBeforeCorrection.size() + "): " + errors);
+            System.out.println("Error Correction:\n" + errors + " bits of " + bitsBeforeCorrection.size()
+                    + " are faulty");
         }
 
         return bits;
@@ -663,6 +664,38 @@ public class Watermark {
         return bits2String(extractData(image)).trim();
     }
 
+    public int getBitBoxSize() {
+        return this.bitBoxSize;
+    }
+
+    public int getByteLenErrorCorrection() {
+        return this.byteLenErrorCorrection;
+    }
+
+    public int getMaxBitsData() {
+        return this.maxBitsData;
+    }
+
+    public int getMaxBitsTotal() {
+        return this.maxBitsTotal;
+    }
+
+    public int getMaxTextLen() {
+        return this.maxTextLen;
+    }
+
+    public double getOpacity() {
+        return this.opacity;
+    }
+
+    public long getRandomizeEmbeddingSeed() {
+        return this.randomizeEmbeddingSeed;
+    }
+
+    public long getRandomizeWatermarkSeed() {
+        return this.randomizeWatermarkSeed;
+    }
+
     private Bits string2Bits(String s) {
         final Bits bits = new Bits();
 
@@ -670,7 +703,7 @@ public class Watermark {
         s = s.toLowerCase();
         for (int i = 0; i < s.length(); i++) {
             final char c = s.charAt(i);
-            if (validChars.indexOf(c) < 0) {
+            if (VALID_CHARS.indexOf(c) < 0) {
                 s = s.substring(0, i) + s.substring(i + 1);
                 i--;
             }
@@ -687,7 +720,7 @@ public class Watermark {
 
         // create watermark bits...
         for (int j = 0; j < s.length(); j++) {
-            bits.addValue(validChars.indexOf(s.charAt(j)), 6);
+            bits.addValue(VALID_CHARS.indexOf(s.charAt(j)), 6);
         }
 
         return bits;

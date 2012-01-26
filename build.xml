@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="jar" name="Create Runnable Jar for Project dct-watermark">
+    <target name="clean" description="Cleanup build">
+        <delete includeEmptyDirs="true" failonerror="false" dir="build" />
+        <delete file="dct-watermark.jar" />
+    </target>
+    <target name="compile">
+        <mkdir dir="build" />
+        <!-- compile... -->
+        <javac debug="true"
+               deprecation="false"
+               destdir="build"
+               encoding="UTF-8"
+               failonerror="true"
+               optimize="true"
+               srcdir="src">
+        </javac>
+        <!-- copy resources... -->
+        <copy todir="build">
+            <fileset defaultexcludes="true" dir="src" />
+        </copy>
+    </target>
+    <target name="jar" description="Create a JAR" depends="compile">
+        <jar destfile="dct-watermark.jar">
+            <manifest>
+                <attribute name="Main-Class" value="Main" />
+            </manifest>
+            <fileset dir="build" />
+        </jar>
+    </target>
+</project>
