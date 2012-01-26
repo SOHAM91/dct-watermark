@@ -15,7 +15,7 @@ here is an example watermark:
 <a href="https://code.google.com/p/dct-watermark/source/browse/wiki/images/water3.raw"><img src="https://dct-watermark.googlecode.com/svn/wiki/images/water3.png"/> water3.raw</a> *Resurrected watermark* after some statistical sharpening. Now we can read the bits again. As you can see *there are errors* compared to water1.raw. Some bits are faulty. If not too many, it can be fixed via [http://en.wikipedia.org/wiki/Reed%E2%80%93Solomon_error_correction error correction].
 
 == Example Usage ==
-Download the [https://code.google.com/p/dct-watermark/source/browse/trunk/dct-watermark.jar dct-watermark.jar], and start it via Java from the command line. To *embed* a watermark _Hello World_ in a picture called _[https://code.google.com/p/dct-watermark/source/browse/trunk/lena.jpg lena.jpg]_ run the following (result will be in _[https://code.google.com/p/dct-watermark/source/browse/trunk/lena2.jpg lena2.jpg]_)):
+Download the [https://code.google.com/p/dct-watermark/source/browse/trunk/dct-watermark.jar dct-watermark.jar], and start it via Java from the command line. To *embed* a watermark _Hello World_ in a picture called _[http://en.wikipedia.org/wiki/Lenna lena.jpg]_ run the following (result will be in _[https://code.google.com/p/dct-watermark/source/browse/trunk/lena2.jpg lena2.jpg]_)):
 {{{
 java -jar dct-watermark.jar e -d lena.jpg lena2.jpg "Hello World"
 }}}
