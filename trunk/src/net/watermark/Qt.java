@@ -1,12 +1,12 @@
 package net.watermark;
 
 // 程式名稱：Qt.java
-//程式功能： Qt 類別,含WaterQt(量化)與WaterDeQt(反量化)兩種方法
+// 程式功能： Qt 類別,含WaterQt(量化)與WaterDeQt(反量化)兩種方法
 
 class Qt {
     static int N = 4;
 
-    public double Qtable[][] = {
+    public double qTable[][] = {
             {
                     20, 30, 30, 35 }, {
                     30, 30, 35, 45 }, {
@@ -26,7 +26,7 @@ class Qt {
     void WaterDeQt(final int input[][], final int output[][]) {
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                output[i][j] = (int) (input[i][j] * (this.Qtable[i][j] * this.filter[i][j]));
+                output[i][j] = (int) (input[i][j] * (this.qTable[i][j] * this.filter[i][j]));
             }
         }
     }
@@ -35,7 +35,7 @@ class Qt {
     void WaterQt(final int input[][], final int output[][]) {
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                output[i][j] = (int) Math.round(input[i][j] / (this.Qtable[i][j] * this.filter[i][j]));
+                output[i][j] = (int) Math.round(input[i][j] / (this.qTable[i][j] * this.filter[i][j]));
             }
         }
     }

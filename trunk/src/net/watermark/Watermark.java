@@ -321,7 +321,7 @@ public class Watermark {
                 k = 0;
 
                 // 宣告 DCT2 物件
-                final DCT2 wm1 = new DCT2();
+                final DCT wm1 = new DCT(4);
 
                 // 引用DCT2 class 中,ForwardDCT的方法
                 wm1.ForwardDCT(w1, w2);
@@ -624,7 +624,7 @@ public class Watermark {
                 final Qt qw2 = new Qt(); // 宣告 Qt 物件
                 qw2.WaterDeQt(w1, w2); // 引用Qt class 中,WaterDeQt的方法
 
-                final DCT2 wm2 = new DCT2(); // 宣告 DCT2 物件
+                final DCT wm2 = new DCT(4); // 宣告 DCT2 物件
                 wm2.InverseDCT(w2, w3); // 引用DCT2 class 中,InverseDCT的方法
                 for (int p = y; p < y + W; p++) {
                     for (int q = x; q < x + W; q++) {
